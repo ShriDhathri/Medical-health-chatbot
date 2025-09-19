@@ -28,3 +28,9 @@ export type Resource = {
   url: string;
   icon?: LucideIcon;
 };
+
+export type EmergencyContact = {
+    id: string;
+    name: string;
+    phone: string;
+};

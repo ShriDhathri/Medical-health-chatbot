@@ -15,8 +15,9 @@ import {
   SidebarTrigger,
   useSidebar,
 } from '@/components/ui/sidebar';
-import { Bot, MessageCircle, Smile, History, BookOpen, Menu } from 'lucide-react';
+import { Bot, MessageCircle, Smile, History, BookOpen, LogIn } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { useLocalStorage } from '@/hooks/use-local-storage';
 
 function AppHeader() {
     const { isMobile, open, setOpen } = useSidebar();
@@ -35,6 +36,11 @@ function AppHeader() {
 
 export default function AppLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
+  const [user] = useLocalStorage('user', null);
+
+  if (pathname === '/login') {
+    return <>{children}</>;
+  }
 
   const menuItems = [
     { href: '/', label: 'Chat', icon: MessageCircle },
@@ -68,6 +74,16 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
                 </SidebarMenuButton>
               </SidebarMenuItem>
             ))}
+             {!user && (
+                <SidebarMenuItem>
+                    <SidebarMenuButton asChild isActive={pathname === '/login'} tooltip={{children: 'Login', side: "right"}}>
+                    <Link href="/login">
+                        <LogIn />
+                        <span>Login</span>
+                    </Link>
+                    </SidebarMenuButton>
+                </SidebarMenuItem>
+            )}
           </SidebarMenu>
         </SidebarContent>
       </Sidebar>

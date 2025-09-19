@@ -18,6 +18,7 @@ export type GenerateResponseInput = z.infer<typeof GenerateResponseInputSchema>;
 
 const GenerateResponseOutputSchema = z.object({
   chatbotResponse: z.string().describe('The chatbot response to the user input.'),
+  isTriggering: z.boolean().describe('Whether the user input contains triggering content like suicidal thoughts.'),
 });
 export type GenerateResponseOutput = z.infer<typeof GenerateResponseOutputSchema>;
 
@@ -31,6 +32,8 @@ const prompt = ai.definePrompt({
   output: {schema: GenerateResponseOutputSchema},
   prompt: `You are a mental health support chatbot. Your goal is to provide supportive and relevant responses to the user based on their input.
 
+Analyze the user's input for any indication of self-harm, suicide, or immediate danger. If such content is detected, set the 'isTriggering' flag to true.
+
 User Input: {{{userInput}}}
 
 {{#if conversationHistory}}
@@ -38,7 +41,7 @@ Conversation History:
 {{{conversationHistory}}}
 {{/if}}
 
-Chatbot Response:`, // Keep it open-ended for a chatbot response.
+Chatbot Response:`,
 });
 
 const generateResponseFlow = ai.defineFlow(
