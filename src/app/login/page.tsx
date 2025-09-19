@@ -73,7 +73,7 @@ export default function LoginPage() {
                     <Bot className="h-8 w-8" />
                 </div>
             </div>
-          <CardTitle className="text-2xl font-bold">Welcome to Wellbeing Chat</CardTitle>
+          <CardTitle className="text-2xl font-bold">Welcome to TheraByte chat</CardTitle>
           <CardDescription>Sign in to continue to your personal space.</CardDescription>
         </CardHeader>
         <CardContent>

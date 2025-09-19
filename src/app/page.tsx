@@ -134,7 +134,7 @@ export default function ChatPage() {
     const newId = uuidv4();
     setCurrentConversationId(newId);
     const initialMessages: Message[] = [
-      { id: uuidv4(), role: 'bot', text: "Hello! I'm Wellbeing Chat. How are you feeling today? You can share anything that's on your mind.", timestamp: new Date().toISOString() },
+      { id: uuidv4(), role: 'bot', text: "Hello! I'm TheraByte chat. How are you feeling today? You can share anything that's on your mind.", timestamp: new Date().toISOString() },
     ];
     setMessages(initialMessages);
     const newConversation: Conversation = { id: newId, date: new Date().toISOString(), messages: initialMessages };

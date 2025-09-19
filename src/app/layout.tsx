@@ -4,7 +4,7 @@ import { Toaster } from "@/components/ui/toaster";
 import AppLayout from '@/components/app-layout';
 
 export const metadata: Metadata = {
-  title: 'Wellbeing Chat',
+  title: 'TheraByte chat',
   description: 'A mental health support chatbot to help you on your journey.',
 };
 

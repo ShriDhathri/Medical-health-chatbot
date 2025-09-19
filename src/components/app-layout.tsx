@@ -26,7 +26,7 @@ function AppHeader() {
         <header className="flex items-center justify-between p-4 border-b h-16">
             <div className='flex items-center gap-4'>
                 <SidebarTrigger className={cn(isMobile ? "" : "hidden")}/>
-                <h1 className="text-xl font-headline font-bold">Wellbeing Chat</h1>
+                <h1 className="text-xl font-headline font-bold">TheraByte chat</h1>
             </div>
             {/* Can add user profile icon here */}
         </header>
@@ -58,7 +58,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
                     <Bot className="h-6 w-6" />
                 </div>
                 <h1 className="text-xl font-headline font-bold group-data-[collapsible=icon]:opacity-0 transition-opacity duration-300 ease-in-out">
-                    Wellbeing Chat
+                    TheraByte chat
                 </h1>
             </div>
         </SidebarHeader>
