@@ -16,6 +16,7 @@ import {
   useSidebar,
 } from '@/components/ui/sidebar';
 import { Bot, MessageCircle, Smile, History, BookOpen, Menu } from 'lucide-react';
+import { cn } from '@/lib/utils';
 
 function AppHeader() {
     const { isMobile, open, setOpen } = useSidebar();
