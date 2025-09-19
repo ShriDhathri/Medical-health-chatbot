@@ -78,15 +78,21 @@ export default function ChatPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [moodHistory, setMoodHistory] = useLocalStorage<MoodEntry[]>('moodHistory', []);
   const [emergencyContacts] = useLocalStorage<EmergencyContact[]>('emergencyContacts', []);
-  const [user] = useLocalStorage('user', null);
+  const [user, setUser] = useLocalStorage('user', null);
+  const [authChecked, setAuthChecked] = useState(false);
   const { toast } = useToast();
   const scrollAreaRef = useRef<HTMLDivElement>(null);
   const [showTriggerWarning, setShowTriggerWarning] = useState(false);
 
   useEffect(() => {
-    if (!user) {
-      router.push('/login');
-    } else {
+    // Only run this effect on the client
+    if (typeof window !== 'undefined') {
+      const storedUser = localStorage.getItem('user');
+      if (!storedUser || storedUser === 'null') {
+        router.push('/login');
+      } else {
+        setUser(JSON.parse(storedUser));
+        setAuthChecked(true);
         // Start a new conversation or load an existing one
         if (conversations.length > 0) {
         const lastConv = conversations[conversations.length-1];
@@ -101,8 +107,9 @@ export default function ChatPage() {
         } else {
         startNewConversation();
         }
+      }
     }
-  }, [user, router]);
+  }, [router, conversations.length]);
 
   useEffect(() => {
     // Save messages to conversations when they change
@@ -190,11 +197,11 @@ export default function ChatPage() {
     }
   };
 
-  if (!user) {
+  if (!authChecked) {
     return (
       <div className="flex flex-col h-[calc(100vh-120px)] items-center justify-center">
         <Loader2 className="h-8 w-8 animate-spin" />
-        <p className="mt-4 text-muted-foreground">Redirecting to login...</p>
+        <p className="mt-4 text-muted-foreground">Checking authentication...</p>
       </div>
     );
   }
