@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
-import { User, Pill, Clock, Upload, File as FileIcon, Trash2, Bell, BellOff } from 'lucide-react';
+import { User, Pill, Clock, Upload, File as FileIcon, Trash2, Bell, BellOff, Loader2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import type { Prescription } from '@/lib/types';
 import { v4 as uuidv4 } from 'uuid';
@@ -16,7 +16,7 @@ import { useRouter } from 'next/navigation';
 export default function ProfilePage() {
   const router = useRouter();
   const { toast } = useToast();
-  const [user, setUser] = useLocalStorage('user', null);
+  const [user] = useLocalStorage('user', null);
   const [prescriptions, setPrescriptions] = useLocalStorage<Prescription[]>('prescriptions', []);
   const [authChecked, setAuthChecked] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -27,18 +27,17 @@ export default function ProfilePage() {
       if (!storedUser || storedUser === 'null') {
         router.push('/login');
       } else {
-        setUser(JSON.parse(storedUser));
         setAuthChecked(true);
       }
     }
-  }, [router, setUser]);
+  }, [router]);
   
   useEffect(() => {
     // Request notification permission on component mount
-    if ('Notification' in window && Notification.permission !== 'granted' && Notification.permission !== 'denied') {
+    if (authChecked && 'Notification' in window && Notification.permission !== 'granted' && Notification.permission !== 'denied') {
       Notification.requestPermission();
     }
-  }, []);
+  }, [authChecked]);
 
   const handleAddPrescription = () => {
     setPrescriptions([...prescriptions, { id: uuidv4(), name: '', dosage: '', time: '' }]);
@@ -94,46 +93,26 @@ export default function ProfilePage() {
     if ('Notification' in window && Notification.permission === 'granted') {
         const [hours, minutes] = prescription.time.split(':').map(Number);
         
-        const scheduleNotification = () => {
-            const now = new Date();
-            let reminderTime = new Date(now.getFullYear(), now.getMonth(), now.getDate(), hours, minutes, 0);
+        // Clear any existing interval for this prescription
+        if (prescription.reminderId) {
+          clearInterval(prescription.reminderId);
+        }
 
-            if (reminderTime < now) {
-                reminderTime.setDate(reminderTime.getDate() + 1); // Set for tomorrow if time has passed today
-            }
+        const dailyInterval = 24 * 60 * 60 * 1000;
+        const reminderId = setInterval(() => {
+            new Notification('Medication Reminder', {
+                body: `It's time to take your ${prescription.name} (${prescription.dosage}).`,
+                icon: '/logo.png' 
+            });
+        }, dailyInterval);
 
-            const delay = reminderTime.getTime() - now.getTime();
-
-            setTimeout(() => {
-                new Notification('Medication Reminder', {
-                    body: `It's time to take your ${prescription.name} (${prescription.dosage}).`,
-                    icon: '/logo.png' 
-                });
-                // Set up the next one
-                const dailyInterval = 24 * 60 * 60 * 1000;
-                const reminderId = setInterval(() => {
-                    new Notification('Medication Reminder', {
-                        body: `It's time to take your ${prescription.name} (${prescription.dosage}).`,
-                        icon: '/logo.png' 
-                    });
-                }, dailyInterval);
-
-                const updatedPrescriptions = prescriptions.map(p => p.id === prescription.id ? {...p, reminderId: reminderId as unknown as number} : p);
-                setPrescriptions(updatedPrescriptions);
-            }, delay);
-        };
-        
-        scheduleNotification();
+        const updatedPrescriptions = prescriptions.map(p => p.id === prescription.id ? {...p, reminderId: reminderId as unknown as number} : p);
+        setPrescriptions(updatedPrescriptions);
         
         toast({
             title: 'Daily Reminder Set!',
             description: `You'll be notified daily at ${prescription.time} to take ${prescription.name}.`
         });
-        
-        // We set a placeholder reminderId immediately to update the UI
-        const updatedPrescriptions = prescriptions.map(p => p.id === prescription.id ? {...p, reminderId: -1 } : p); // Use a temporary ID
-        setPrescriptions(updatedPrescriptions);
-
 
     } else if ('Notification' in window && Notification.permission === 'denied') {
         toast({
@@ -164,7 +143,12 @@ export default function ProfilePage() {
   };
 
   if (!authChecked || !user) {
-    return <div className="flex h-full items-center justify-center"><p>Loading profile...</p></div>;
+    return (
+        <div className="flex flex-col h-[calc(100vh-120px)] items-center justify-center">
+            <Loader2 className="h-8 w-8 animate-spin" />
+            <p className="mt-4 text-muted-foreground">Loading profile...</p>
+        </div>
+    );
   }
 
   return (

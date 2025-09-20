@@ -85,61 +85,64 @@ export default function ChatPage() {
   const [showTriggerWarning, setShowTriggerWarning] = useState(false);
 
   useEffect(() => {
-    // Only run this effect on the client
+    // Authentication check effect
     if (typeof window !== 'undefined') {
       const storedUser = localStorage.getItem('user');
       if (!storedUser || storedUser === 'null') {
         router.push('/login');
       } else {
-        const localConversations: Conversation[] = JSON.parse(localStorage.getItem('conversations') || '[]');
-        setUser(JSON.parse(storedUser));
+        // User is found, mark auth as checked.
+        // The useLocalStorage hook will handle setting the user state.
         setAuthChecked(true);
-
-        const startNewConversation = () => {
-          const newId = uuidv4();
-          setCurrentConversationId(newId);
-          const initialMessages: Message[] = [
-            { id: uuidv4(), role: 'bot', text: "Hello! I'm TheraByte chat. How are you feeling today? You can share anything that's on your mind.", timestamp: new Date().toISOString() },
-          ];
-          setMessages(initialMessages);
-        };
-        
-        // Start a new conversation or load an existing one
-        const lastConv = localConversations.length > 0 ? localConversations[localConversations.length-1] : null;
-
-        if (lastConv) {
-          // Check if last conversation is recent (e.g., within last 2 hours)
-          const lastMessageDate = lastConv.messages.length > 0 ? new Date(lastConv.messages[lastConv.messages.length - 1].timestamp) : new Date(lastConv.date);
-          if (Date.now() - lastMessageDate.getTime() < 2 * 60 * 60 * 1000) {
-              setCurrentConversationId(lastConv.id);
-              setMessages(lastConv.messages);
-          } else {
-              startNewConversation();
-          }
-        } else {
-          startNewConversation();
-        }
       }
     }
-  }, [router, setUser]);
+  }, [router]);
+  
+  useEffect(() => {
+    // Conversation loading effect, only runs after auth is checked
+    if (authChecked) {
+      const localConversations: Conversation[] = JSON.parse(localStorage.getItem('conversations') || '[]');
+      const startNewConversation = () => {
+        const newId = uuidv4();
+        setCurrentConversationId(newId);
+        const initialMessages: Message[] = [
+          { id: uuidv4(), role: 'bot', text: "Hello! I'm TheraByte chat. How are you feeling today? You can share anything that's on your mind.", timestamp: new Date().toISOString() },
+        ];
+        setMessages(initialMessages);
+      };
+
+      const lastConv = localConversations.length > 0 ? localConversations[localConversations.length-1] : null;
+      if (lastConv) {
+        const lastMessageDate = lastConv.messages.length > 0 ? new Date(lastConv.messages[lastConv.messages.length - 1].timestamp) : new Date(lastConv.date);
+        if (Date.now() - lastMessageDate.getTime() < 2 * 60 * 60 * 1000) {
+            setCurrentConversationId(lastConv.id);
+            setMessages(lastConv.messages);
+        } else {
+            startNewConversation();
+        }
+      } else {
+        startNewConversation();
+      }
+    }
+  }, [authChecked]);
 
   useEffect(() => {
     // Save messages to conversations when they change
-    if (currentConversationId) {
+    if (currentConversationId && messages.length > 0) {
       const existingConvIndex = conversations.findIndex(c => c.id === currentConversationId);
       
       let updatedConversations: Conversation[];
 
       if (existingConvIndex !== -1) {
          updatedConversations = conversations.map((conv, index) => 
-          index === existingConvIndex ? { ...conv, messages } : conv
+          index === existingConvIndex ? { ...conv, messages: messages } : conv
         );
       } else {
         updatedConversations = [...conversations, { id: currentConversationId, date: new Date().toISOString(), messages }];
       }
       setConversations(updatedConversations);
     }
-  }, [messages, currentConversationId]);
+  }, [messages, currentConversationId, setConversations]);
 
   useEffect(() => {
     if (scrollAreaRef.current) {
