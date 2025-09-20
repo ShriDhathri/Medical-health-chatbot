@@ -15,7 +15,7 @@ import {
   SidebarTrigger,
   useSidebar,
 } from '@/components/ui/sidebar';
-import { Bot, MessageCircle, Smile, History, BookOpen, LogIn, User as UserIcon } from 'lucide-react';
+import { Bot, MessageCircle, Smile, History, BookOpen, LogIn, User as UserIcon, HeartPulse } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useLocalStorage } from '@/hooks/use-local-storage';
 
@@ -46,6 +46,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
     { href: '/', label: 'Chat', icon: MessageCircle },
     { href: '/mood', label: 'Mood', icon: Smile },
     { href: '/history', label: 'History', icon: History },
+    { href: '/wellbeing', label: 'Wellbeing', icon: HeartPulse },
     { href: '/resources', label: 'Resources', icon: BookOpen },
     { href: '/profile', label: 'Profile', icon: UserIcon },
   ];
