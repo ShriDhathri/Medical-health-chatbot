@@ -75,7 +75,7 @@ export default function ProfilePage() {
   const handleRemovePrescription = (id: string) => {
     const prescriptionToRemove = prescriptions.find(p => p.id === id);
     if(prescriptionToRemove?.reminderId) {
-        clearInterval(prescriptionToRemove.reminderId);
+        clearTimeout(prescriptionToRemove.reminderId);
     }
     setPrescriptions(prescriptions.filter(p => p.id !== id));
     toast({
@@ -93,25 +93,38 @@ export default function ProfilePage() {
     if ('Notification' in window && Notification.permission === 'granted') {
         const [hours, minutes] = prescription.time.split(':').map(Number);
         
-        // Clear any existing interval for this prescription
+        // Clear any existing timeout for this prescription
         if (prescription.reminderId) {
-          clearInterval(prescription.reminderId);
+          clearTimeout(prescription.reminderId);
         }
 
-        const dailyInterval = 24 * 60 * 60 * 1000;
-        const reminderId = setInterval(() => {
+        const now = new Date();
+        const reminderTime = new Date(now.getFullYear(), now.getMonth(), now.getDate(), hours, minutes);
+
+        if (reminderTime < now) {
+            // If the time is in the past for today, schedule it for tomorrow
+            reminderTime.setDate(reminderTime.getDate() + 1);
+        }
+        
+        const timeout = reminderTime.getTime() - now.getTime();
+
+        const reminderId = setTimeout(() => {
             new Notification('Medication Reminder', {
                 body: `It's time to take your ${prescription.name} (${prescription.dosage}).`,
                 icon: '/logo.png' 
             });
-        }, dailyInterval);
+            // Clear reminder after it has fired
+            const updatedPrescriptions = prescriptions.map(p => p.id === prescription.id ? {...p, reminderId: undefined} : p);
+            setPrescriptions(updatedPrescriptions);
+
+        }, timeout);
 
         const updatedPrescriptions = prescriptions.map(p => p.id === prescription.id ? {...p, reminderId: reminderId as unknown as number} : p);
         setPrescriptions(updatedPrescriptions);
         
         toast({
-            title: 'Daily Reminder Set!',
-            description: `You'll be notified daily at ${prescription.time} to take ${prescription.name}.`
+            title: 'Reminder Set!',
+            description: `You'll be notified at ${prescription.time} to take ${prescription.name}.`
         });
 
     } else if ('Notification' in window && Notification.permission === 'denied') {
@@ -132,7 +145,7 @@ export default function ProfilePage() {
   const cancelReminder = (id: string) => {
     const prescription = prescriptions.find(p => p.id === id);
     if (prescription?.reminderId) {
-      clearInterval(prescription.reminderId);
+      clearTimeout(prescription.reminderId);
       const updatedPrescriptions = prescriptions.map(p => p.id === id ? { ...p, reminderId: undefined } : p);
       setPrescriptions(updatedPrescriptions);
       toast({
@@ -212,7 +225,7 @@ export default function ProfilePage() {
                         <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => {
                             const updatedPrescriptions = prescriptions.map(pr => pr.id === p.id ? { ...pr, file: undefined, reminderId: undefined } : pr);
                             if (p.reminderId) {
-                                clearInterval(p.reminderId);
+                                clearTimeout(p.reminderId);
                             }
                             setPrescriptions(updatedPrescriptions);
                         }}>
