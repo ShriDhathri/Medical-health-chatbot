@@ -34,3 +34,16 @@ export type EmergencyContact = {
     name: string;
     phone: string;
 };
+
+export type Prescription = {
+  id: string;
+  name: string;
+  dosage: string;
+  time: string;
+  file?: {
+    name: string;
+    type: string;
+    size: number;
+  };
+  reminderId?: number;
+};
