@@ -105,8 +105,9 @@ export default function ChatPage() {
         };
         
         // Start a new conversation or load an existing one
-        if (localConversations.length > 0) {
-          const lastConv = localConversations[localConversations.length-1];
+        const lastConv = localConversations.length > 0 ? localConversations[localConversations.length-1] : null;
+
+        if (lastConv) {
           // Check if last conversation is recent (e.g., within last 2 hours)
           const lastMessageDate = lastConv.messages.length > 0 ? new Date(lastConv.messages[lastConv.messages.length - 1].timestamp) : new Date(lastConv.date);
           if (Date.now() - lastMessageDate.getTime() < 2 * 60 * 60 * 1000) {
@@ -120,7 +121,7 @@ export default function ChatPage() {
         }
       }
     }
-  }, [router]);
+  }, [router, setUser]);
 
   useEffect(() => {
     // Save messages to conversations when they change
