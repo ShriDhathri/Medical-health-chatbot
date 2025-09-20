@@ -76,7 +76,7 @@ export default function ProfilePage() {
   const handleRemovePrescription = (id: string) => {
     const prescriptionToRemove = prescriptions.find(p => p.id === id);
     if(prescriptionToRemove?.reminderId) {
-        clearTimeout(prescriptionToRemove.reminderId);
+        clearInterval(prescriptionToRemove.reminderId);
     }
     setPrescriptions(prescriptions.filter(p => p.id !== id));
     toast({
@@ -93,29 +93,48 @@ export default function ProfilePage() {
 
     if ('Notification' in window && Notification.permission === 'granted') {
         const [hours, minutes] = prescription.time.split(':').map(Number);
-        const now = new Date();
-        const reminderTime = new Date(now.getFullYear(), now.getMonth(), now.getDate(), hours, minutes, 0);
-
-        if (reminderTime < now) {
-            reminderTime.setDate(reminderTime.getDate() + 1); // Set for tomorrow if time has passed today
-        }
         
-        const delay = reminderTime.getTime() - now.getTime();
-        
-        const reminderId = window.setTimeout(() => {
-            new Notification('Medication Reminder', {
-                body: `It's time to take your ${prescription.name} (${prescription.dosage}).`,
-                icon: '/logo.png' 
-            });
-        }, delay);
+        const scheduleNotification = () => {
+            const now = new Date();
+            let reminderTime = new Date(now.getFullYear(), now.getMonth(), now.getDate(), hours, minutes, 0);
 
-        const updatedPrescriptions = prescriptions.map(p => p.id === prescription.id ? {...p, reminderId: reminderId as unknown as number} : p);
+            if (reminderTime < now) {
+                reminderTime.setDate(reminderTime.getDate() + 1); // Set for tomorrow if time has passed today
+            }
+
+            const delay = reminderTime.getTime() - now.getTime();
+
+            setTimeout(() => {
+                new Notification('Medication Reminder', {
+                    body: `It's time to take your ${prescription.name} (${prescription.dosage}).`,
+                    icon: '/logo.png' 
+                });
+                // Set up the next one
+                const dailyInterval = 24 * 60 * 60 * 1000;
+                const reminderId = setInterval(() => {
+                    new Notification('Medication Reminder', {
+                        body: `It's time to take your ${prescription.name} (${prescription.dosage}).`,
+                        icon: '/logo.png' 
+                    });
+                }, dailyInterval);
+
+                const updatedPrescriptions = prescriptions.map(p => p.id === prescription.id ? {...p, reminderId: reminderId as unknown as number} : p);
+                setPrescriptions(updatedPrescriptions);
+            }, delay);
+        };
+        
+        scheduleNotification();
+        
+        toast({
+            title: 'Daily Reminder Set!',
+            description: `You'll be notified daily at ${prescription.time} to take ${prescription.name}.`
+        });
+        
+        // We set a placeholder reminderId immediately to update the UI
+        const updatedPrescriptions = prescriptions.map(p => p.id === prescription.id ? {...p, reminderId: -1 } : p); // Use a temporary ID
         setPrescriptions(updatedPrescriptions);
 
-        toast({
-            title: 'Reminder Set!',
-            description: `You'll be notified at ${prescription.time} to take ${prescription.name}.`
-        });
+
     } else if ('Notification' in window && Notification.permission === 'denied') {
         toast({
             variant: 'destructive',
@@ -134,7 +153,7 @@ export default function ProfilePage() {
   const cancelReminder = (id: string) => {
     const prescription = prescriptions.find(p => p.id === id);
     if (prescription?.reminderId) {
-      clearTimeout(prescription.reminderId);
+      clearInterval(prescription.reminderId);
       const updatedPrescriptions = prescriptions.map(p => p.id === id ? { ...p, reminderId: undefined } : p);
       setPrescriptions(updatedPrescriptions);
       toast({
@@ -206,7 +225,13 @@ export default function ProfilePage() {
                     <div className="text-sm flex items-center gap-2 p-2 rounded-md bg-secondary">
                         <FileIcon className="h-4 w-4 shrink-0" />
                         <span className="font-medium truncate flex-1">{p.file.name}</span>
-                        <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => handlePrescriptionChange(p.id, 'file', undefined)}>
+                        <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => {
+                            const updatedPrescriptions = prescriptions.map(pr => pr.id === p.id ? { ...pr, file: undefined, reminderId: undefined } : pr);
+                            if (p.reminderId) {
+                                clearInterval(p.reminderId);
+                            }
+                            setPrescriptions(updatedPrescriptions);
+                        }}>
                             <Trash2 className="h-4 w-4 text-destructive" />
                         </Button>
                     </div>
