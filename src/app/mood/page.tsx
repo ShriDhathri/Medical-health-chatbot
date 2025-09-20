@@ -30,7 +30,7 @@ import {
   DialogDescription,
 } from '@/components/ui/dialog';
 import { useToast } from '@/hooks/use-toast';
-import { Loader2, Lightbulb } from 'lucide-react';
+import { Loader2, Lightbulb, Smile } from 'lucide-react';
 import { ChartTooltipContent } from '@/components/ui/chart';
 
 const moodToValue: Record<string, number> = {
@@ -64,7 +64,7 @@ export default function MoodPage() {
   }, []);
 
   const chartData = useMemo(() => {
-    if (!moodHistory || moodHistory.length === 0) return [];
+    if (!isClient || !moodHistory || moodHistory.length === 0) return [];
     
     const now = new Date();
     const weekStart = startOfWeek(now);
@@ -83,7 +83,7 @@ export default function MoodPage() {
             mood: avgMoodValue,
         };
     });
-  }, [moodHistory]);
+  }, [moodHistory, isClient]);
 
   const handleGetRecommendations = async () => {
     setIsLoading(true);

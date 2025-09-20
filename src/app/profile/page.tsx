@@ -114,8 +114,7 @@ export default function ProfilePage() {
                 icon: '/logo.png' 
             });
             // Clear reminder after it has fired
-            const updatedPrescriptions = prescriptions.map(p => p.id === prescription.id ? {...p, reminderId: undefined} : p);
-            setPrescriptions(updatedPrescriptions);
+            setPrescriptions(prev => prev.map(p => p.id === prescription.id ? {...p, reminderId: undefined} : p));
 
         }, timeout);
 
