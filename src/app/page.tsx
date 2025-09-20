@@ -7,7 +7,7 @@ import { generateResponse } from '@/ai/flows/generate-response';
 import { useRouter } from 'next/navigation';
 
 import { Card, CardContent } from '@/components/ui/card';
-import { Button, buttonVariants } from '@/components/ui/button';
+import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
@@ -25,6 +25,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
+import { buttonVariants } from '@/components/ui/button';
 
 const moodOptions: { mood: Mood; icon: React.ElementType }[] = [
   { mood: 'Happy', icon: Smile },
@@ -91,17 +92,26 @@ export default function ChatPage() {
       if (!storedUser || storedUser === 'null') {
         router.push('/login');
       } else {
-        // User is found, mark auth as checked.
-        // The useLocalStorage hook will handle setting the user state.
         setAuthChecked(true);
       }
     }
   }, [router]);
   
   useEffect(() => {
-    // Conversation loading effect, only runs after auth is checked
+    // This effect should only run once after the auth check is successful.
     if (authChecked) {
-      const localConversations: Conversation[] = JSON.parse(localStorage.getItem('conversations') || '[]');
+      // Use a function to read from localStorage to avoid stale state issues.
+      const getConversations = (): Conversation[] => {
+        try {
+          const item = window.localStorage.getItem('conversations');
+          return item ? JSON.parse(item) : [];
+        } catch (error) {
+          return [];
+        }
+      }
+
+      const localConversations = getConversations();
+
       const startNewConversation = () => {
         const newId = uuidv4();
         setCurrentConversationId(newId);
@@ -112,9 +122,10 @@ export default function ChatPage() {
       };
 
       const lastConv = localConversations.length > 0 ? localConversations[localConversations.length-1] : null;
+      
       if (lastConv) {
         const lastMessageDate = lastConv.messages.length > 0 ? new Date(lastConv.messages[lastConv.messages.length - 1].timestamp) : new Date(lastConv.date);
-        if (Date.now() - lastMessageDate.getTime() < 2 * 60 * 60 * 1000) {
+        if (Date.now() - lastMessageDate.getTime() < 2 * 60 * 60 * 1000) { // 2 hours
             setCurrentConversationId(lastConv.id);
             setMessages(lastConv.messages);
         } else {
@@ -124,6 +135,7 @@ export default function ChatPage() {
         startNewConversation();
       }
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [authChecked]);
 
   useEffect(() => {
@@ -142,7 +154,8 @@ export default function ChatPage() {
       }
       setConversations(updatedConversations);
     }
-  }, [messages, currentConversationId, setConversations]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [messages, currentConversationId]);
 
   useEffect(() => {
     if (scrollAreaRef.current) {
