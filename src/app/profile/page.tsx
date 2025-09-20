@@ -37,8 +37,8 @@ export default function ProfilePage() {
   }, [router, user, isClient]);
   
   useEffect(() => {
-    // Request notification permission on component mount
-    if (authChecked && 'Notification' in window && Notification.permission !== 'granted' && Notification.permission !== 'denied') {
+    // Request notification permission on component mount if not already granted or denied
+    if (authChecked && 'Notification' in window && Notification.permission === 'default') {
       Notification.requestPermission();
     }
   }, [authChecked]);
@@ -115,7 +115,10 @@ export default function ProfilePage() {
                 body: `It's time to take your ${prescription.name} (${prescription.dosage}).`,
                 icon: '/logo.png' 
             });
-            setPrescriptions(prev => prev.map(p => p.id === prescription.id ? {...p, reminderId: undefined} : p));
+            // Update state to remove the reminderId after it has fired
+             setPrescriptions(prev => prev.map(p => 
+                p.id === prescription.id ? {...p, reminderId: undefined} : p
+            ));
 
         }, timeout);
 
