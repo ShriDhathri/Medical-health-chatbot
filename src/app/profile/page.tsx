@@ -20,17 +20,21 @@ export default function ProfilePage() {
   const [prescriptions, setPrescriptions] = useLocalStorage<Prescription[]>('prescriptions', []);
   const [authChecked, setAuthChecked] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  
+  const [isClient, setIsClient] = useState(false);
+  useEffect(() => {
+    setIsClient(true);
+  }, []);
 
   useEffect(() => {
-    if (typeof window !== 'undefined') {
-      const storedUser = localStorage.getItem('user');
-      if (!storedUser || storedUser === 'null') {
+    if (isClient) {
+      if (!user) {
         router.push('/login');
       } else {
         setAuthChecked(true);
       }
     }
-  }, [router]);
+  }, [router, user, isClient]);
   
   useEffect(() => {
     // Request notification permission on component mount
@@ -93,7 +97,6 @@ export default function ProfilePage() {
     if ('Notification' in window && Notification.permission === 'granted') {
         const [hours, minutes] = prescription.time.split(':').map(Number);
         
-        // Clear any existing timeout for this prescription
         if (prescription.reminderId) {
           clearTimeout(prescription.reminderId);
         }
@@ -102,7 +105,6 @@ export default function ProfilePage() {
         const reminderTime = new Date(now.getFullYear(), now.getMonth(), now.getDate(), hours, minutes);
 
         if (reminderTime < now) {
-            // If the time is in the past for today, schedule it for tomorrow
             reminderTime.setDate(reminderTime.getDate() + 1);
         }
         
@@ -113,7 +115,6 @@ export default function ProfilePage() {
                 body: `It's time to take your ${prescription.name} (${prescription.dosage}).`,
                 icon: '/logo.png' 
             });
-            // Clear reminder after it has fired
             setPrescriptions(prev => prev.map(p => p.id === prescription.id ? {...p, reminderId: undefined} : p));
 
         }, timeout);
@@ -154,7 +155,7 @@ export default function ProfilePage() {
     }
   };
 
-  if (!authChecked || !user) {
+  if (!authChecked || !user || !isClient) {
     return (
         <div className="flex flex-col h-[calc(100vh-120px)] items-center justify-center">
             <Loader2 className="h-8 w-8 animate-spin" />

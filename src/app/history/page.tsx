@@ -46,11 +46,12 @@ function HistoryMessage({ message }: { message: Message }) {
 export default function HistoryPage() {
   const [conversations] = useLocalStorage<Conversation[]>('conversations', []);
   const [isClient, setIsClient] = useState(false);
+
   useEffect(() => {
     setIsClient(true);
   }, []);
 
-  const sortedConversations = [...conversations].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+  const sortedConversations = isClient ? [...conversations].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()) : [];
     
   return (
     <div>
